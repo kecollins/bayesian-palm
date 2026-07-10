@@ -49,7 +49,10 @@ palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE
     
     post_mean<-get_posterior_mean(post,pars=c("mu","sig2","phi"))
     
+    ### ADJUSTMENT 1
     
+    
+    ### ADJUSTEMENT 2
     simulate_time<-system.time({
       S_boot<-bootstrap_ppp(nsim=nboot,model="LGCP",pars=list(mu=post_mean[1],pars=list(var=post_mean[2],scale=post_mean[3])),
                             win=S$window)

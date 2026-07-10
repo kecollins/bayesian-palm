@@ -63,3 +63,26 @@ grid_counts<-function(grid,x){
   cells<-rbind(cells,data.frame(v1=1:nrow(grid),n=0))
   return(as.vector((cells%>%group_by(v1)%>%summarize(n=sum(n)))[,2])$n)
 }
+
+### CALCULATING SCORES
+lgcp_lamP<-function(d,rho,lsig2,lphi){
+  rho*exp(exp(lsig2)*exp(-d/exp(lphi)))
+}
+
+lgcp_d_lamP<-function(d,rho,lsig2,lphi){
+  d1<-exp(exp(lsig2)*exp(-d/exp(lphi)))
+  d2<-rho*exp(lsig2)*exp(-d/exp(lphi))*exp(exp(lsig2)*exp(-d/exp(lphi)))
+  d3<-rho*d*exp(exp(lsig2-d*exp(-lphi))+lsig2-lphi-d*exp(-lphi))
+  
+  return(cbind(d1,d2,d3))
+}
+
+score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
+  r<-seq(0,data$R,by=data$dr)
+  apply(2*d_lamP(data$S_dist1R,rho,lsig2,lphi)/lamP(data$S_dist1R,rho,lsig2,lphi),2,sum)+
+    apply(d_lamP(data$S_dist2R,rho,lsig2,lphi)/lamP(data$S_dist2R,rho,lsig2,lphi),2,sum)-
+    sum(data$window_keep)*2*pi*apply(d_lamP(r,rho,lsig2,lphi)*r*data$dr,2,sum)
+}
+
+
+
