@@ -10,7 +10,11 @@ palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE
   S_all<-readRDS(paste0('sim_output/lgcp/sim_data_',round(mu),'_',wsize,'.rds'))
   if(empirical){rho_sd<-1} else{rho_sd<-30}
   
+  model<-stan_model('lgcp/lgcp_palm_EC.stan')
+  model<-stan_model('lgcp/lgcp_palm.stan')
+  
   all_out<-foreach(k=c(1:nsim))%do%{
+    print(k)
     S<-S_all[[k]]
     
     # ORGANIZE DATA
@@ -28,14 +32,15 @@ palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE
       dr=data$dr,
       d1=data$S_dist1R,
       d2=data$S_dist2R,
-      dG=seq(data$dr/2,data$R-data$dr/2,by=data$dr)
+      dG=seq(data$dr/2,data$R-data$dr/2,by=data$dr),
+      dG_counts=data$dG_counts
     )
     
     
     init_time<-system.time({
       # RUN STAN MODEL
-      post <- stan(
-        file = "lgcp/lgcp_palm_EC.stan",  # Stan program
+      post <- sampling(
+        model,  # Stan program compiled earlier
         data = stan_data,    # named list of data
         chains = 1,             # number of Markov chains
         warmup = 1000,          # number of warmup iterations per chain
@@ -50,7 +55,9 @@ palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE
     post_mean<-get_posterior_mean(post,pars=c("mu","sig2","phi"))
     
     ### ADJUSTMENT 1
-    
+    H_inv<-cov(cbind(rstan::extract(post,"mu")$mu,
+              rstan::extract(post,"lsig2")$lsig2,
+              rstan::extract(post,"lphi")$lphi))
     
     ### ADJUSTEMENT 2
     simulate_time<-system.time({
@@ -66,7 +73,7 @@ palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE
         
         # SETUP STAN DATA
         stan_data_boot<-list(
-          rho_mean=S$n/area(owin(c(0,wsize),c(0,wsize))),
+          rho_mean=S_boot[[k]]$n/area(owin(c(0,wsize),c(0,wsize))),
           rho_sd=rho_sd,
           N11=length(data$S_dist1R),
           N12=length(data$S_dist2R),
@@ -75,13 +82,14 @@ palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE
           dr=data$dr,
           d1=data$S_dist1R,
           d2=data$S_dist2R,
-          dG=seq(data$dr/2,data$R-data$dr/2,by=data$dr)
+          dG=seq(data$dr/2,data$R-data$dr/2,by=data$dr),
+          dG_counts=data$dG_counts
         )
         
         
         # RUN STAN MODEL
-        post_boot <- stan(
-          file = "lgcp/lgcp_palm_EC.stan",  # Stan program
+        post_boot <- sampling(
+          model,  # Stan program compiled earlier
           data = stan_data_boot,    # named list of data
           chains = 1,             # number of Markov chains
           warmup = 1000,          # number of warmup iterations per chain

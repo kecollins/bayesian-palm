@@ -7,11 +7,12 @@ functions {
     return lambda;
   }
 
-  real palm_loglik(vector d1, vector d2, vector dG, real rho, real sig2, real phi, real dr, real NR){
+  real palm_loglik(vector d1, vector d2, vector dG_counts, vector dG, real rho, real sig2, real phi, real dr, real NR){
     real pll;
     real loglam1;
     real lam2;
-    loglam1 = sum(2*log(palm_intensity_calc(d1, rho, sig2, phi)))+sum(log(palm_intensity_calc(d2, rho, sig2, phi)));
+    //loglam1 = sum(2*log(palm_intensity_calc(d1, rho, sig2, phi)))+sum(log(palm_intensity_calc(d2, rho, sig2, phi)));
+    loglam1 = sum(dG_counts.*log(palm_intensity_calc(dG,rho,sig2,phi)));
     lam2 = NR*2*pi()*sum(palm_intensity_calc(dG, rho, sig2, phi).*dG*dr);
     pll = loglam1 - lam2;
     return pll;
@@ -28,6 +29,7 @@ data {
   vector<lower=0>[N11] d1;               // point pair distances(symmetric)
   vector<lower=0>[N12] d2;               // point pair distances
   vector<lower=0>[N2] dG;            // quadrature distances
+  vector<lower=0>[N2] dG_counts;      
 }
 parameters {
   real rho;
@@ -43,8 +45,8 @@ transformed parameters {
   mu = log(rho)-sig2/2;
 }
 model {
-  target += palm_loglik(d1, d2, dG, rho, sig2, phi, dr, NR);
+  target += palm_loglik(d1, d2, dG_counts, dG, rho, sig2, phi, dr, NR);
   target += normal_lpdf(rho | rho_mean, rho_sd);
   target += normal_lpdf(lsig2 | 0, 3);
-  target += normal_lpdf(lphi | -2.3, 0.1);
+  target += normal_lpdf(lphi | -2.3, 0.3);
 }

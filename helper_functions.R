@@ -14,10 +14,7 @@ bootstrap_ppp<-function(nsim,model,pars=NULL,dpp_object=NULL,win){
 }
 
 ### ORGANIZE DATA FOR MODEL
-data_clean<-function(S,R,wsize,dr=0.005){
-  
-  # Quadrature granularity
-  dr<-0.005
+data_clean<-function(S,R,wsize,dr=R/1000,nx=20){
   
   # GET POINTS WITHIN R OF BORDER OF SQUARE REGION
   square<-st_cast(st_polygon(list((matrix(c(0,0, wsize,0, wsize,wsize, 0,wsize, 0,0), ncol=2, byrow=TRUE)))),"LINESTRING")
@@ -28,10 +25,25 @@ data_clean<-function(S,R,wsize,dr=0.005){
   # GET PAIRWISE DISTANCE OF POINTS
   S_dist1<-as.vector(as.matrix(rdist(S_df[window_keep,],S_df[window_keep,])))
   S_dist2<-as.vector(as.matrix(rdist(S_df[window_keep,],S_df[!window_keep,])))
-  S_dist1R<-unique(S_dist1[which((S_dist1<R)&(S_dist1>0))]) # unique because palm intensity is symmetric
+  temp<-S_dist1[which((S_dist1<R)&(S_dist1>0))]
+  S_dist1R<-unique(temp) # unique because palm intensity is symmetric
   S_dist2R<-S_dist2[which((S_dist2<R)&(S_dist2>0))]
   
-  return(list(window_keep=window_keep,S_dist1R=S_dist1R,S_dist2R=S_dist2R,R=R,dr=dr))
+  # BIN PAIRWISE DISTANCES
+  dG<-seq(dr/2,R-dr/2,by=dr)
+  
+  S_dist<-rdist(S_df,S_df)
+  S_dist<-S_dist[upper.tri(S_dist)]
+  S_distR<-S_dist[which(S_dist<R)]
+  
+  G_dist<-as.vector(rdist(S_df,grid))
+  G_distR<-G_dist[which(G_dist<R)]
+
+  dS_counts<-grid_counts_1d(dG,S_distR)
+  dG_counts<-grid_counts_1d(dG,G_distR)
+  
+  return(list(window_keep=window_keep,S_dist1R=S_dist1R,S_dist2R=S_dist2R,R=R,dr=dr,dG=dG,
+              dG_counts=dG_counts,dS_counts=dS_counts,S_distR=S_distR,G_distR=G_distR,dx=1/nx^2))
 }
 
 ### BISECTION SEARCH TO FIND ETA
@@ -61,6 +73,13 @@ grid_counts<-function(grid,x){
   cells<-nn2(grid,x,k=1)$nn.id
   cells<-data.frame(v1=cells)%>%group_by(v1)%>%summarize(n=n())
   cells<-rbind(cells,data.frame(v1=1:nrow(grid),n=0))
+  return(as.vector((cells%>%group_by(v1)%>%summarize(n=sum(n)))[,2])$n)
+}
+
+grid_counts_1d<-function(grid,x){
+  cells<-nn2(grid,x,k=1)$nn.id
+  cells<-data.frame(v1=cells)%>%group_by(v1)%>%summarize(n=n())
+  cells<-rbind(cells,data.frame(v1=1:length(grid),n=0))
   return(as.vector((cells%>%group_by(v1)%>%summarize(n=sum(n)))[,2])$n)
 }
 
