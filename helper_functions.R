@@ -14,7 +14,7 @@ bootstrap_ppp<-function(nsim,model,pars=NULL,dpp_object=NULL,win){
 }
 
 ### ORGANIZE DATA FOR MODEL
-data_clean<-function(S,R,wsize,dr=R/1000,nx=20){
+data_clean<-function(S,R,wsize,dr=0.1/500,nx=20){
   
   # GET POINTS WITHIN R OF BORDER OF SQUARE REGION
   square<-st_cast(st_polygon(list((matrix(c(0,0, wsize,0, wsize,wsize, 0,wsize, 0,0), ncol=2, byrow=TRUE)))),"LINESTRING")
@@ -28,6 +28,9 @@ data_clean<-function(S,R,wsize,dr=R/1000,nx=20){
   temp<-S_dist1[which((S_dist1<R)&(S_dist1>0))]
   S_dist1R<-unique(temp) # unique because palm intensity is symmetric
   S_dist2R<-S_dist2[which((S_dist2<R)&(S_dist2>0))]
+  
+  # MAKE GRID
+  grid<-as.matrix(expand.grid(seq(1/nx/2,wsize-1/nx/2,length.out=nx*wsize),seq(1/nx/2,wsize-1/nx/2,length.out=nx*wsize)))
   
   # BIN PAIRWISE DISTANCES
   dG<-seq(dr/2,R-dr/2,by=dr)
@@ -97,11 +100,13 @@ lgcp_d_lamP<-function(d,rho,lsig2,lphi){
 }
 
 score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
-  r<-seq(0,data$R,by=data$dr)
-  apply(2*d_lamP(data$S_dist1R,rho,lsig2,lphi)/lamP(data$S_dist1R,rho,lsig2,lphi),2,sum)+
-    apply(d_lamP(data$S_dist2R,rho,lsig2,lphi)/lamP(data$S_dist2R,rho,lsig2,lphi),2,sum)-
-    sum(data$window_keep)*2*pi*apply(d_lamP(r,rho,lsig2,lphi)*r*data$dr,2,sum)
+  apply(2*d_lamP(data$S_distR,rho,lsig2,lphi)/lamP(data$S_distR,rho,lsig2,lphi),2,sum)-
+    apply(d_lamP(data$G_distR,rho,lsig2,lphi)*data$dx,2,sum)
 }
 
 
+disc_score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
+  apply(2*data$dS_counts*d_lamP(data$dG,rho,lsig2,lphi)/lamP(data$dG,rho,lsig2,lphi),2,sum)-
+    apply(data$dG_counts*d_lamP(data$dG,rho,lsig2,lphi)*data$dx,2,sum)
+}
 
