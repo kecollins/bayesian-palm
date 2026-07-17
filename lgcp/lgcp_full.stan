@@ -20,15 +20,15 @@ parameters {
 transformed parameters {
   real<lower=0> sig2;
   real<lower=0> phi;
-  matrix[N,N] Sigma;
   sig2 = exp(lsig2);
   phi = exp(lphi);
-  Sigma = gp_exponential_cov(d, sig2, phi);
 }
 model {
+  matrix[N,N] Sigma;
+  Sigma = gp_exponential_cov(d, sig2, phi);
   target += loglik(y, W, dx, mu);
   target += normal_lpdf(mu | 0, 100);
   target += multi_normal_lpdf(W | rep_vector(0,N), Sigma);
   target += normal_lpdf(lsig2 | 0, 3);
-  target += uniform_lpdf(lphi | -2.3, 0.1);
+  target += normal_lpdf(lphi | -2.3, 0.1);
 }

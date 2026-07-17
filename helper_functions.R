@@ -17,17 +17,8 @@ bootstrap_ppp<-function(nsim,model,pars=NULL,dpp_object=NULL,win){
 data_clean<-function(S,R,wsize,dr=0.1/500,nx=20){
   
   # GET POINTS WITHIN R OF BORDER OF SQUARE REGION
-  square<-st_cast(st_polygon(list((matrix(c(0,0, wsize,0, wsize,wsize, 0,wsize, 0,0), ncol=2, byrow=TRUE)))),"LINESTRING")
   S_df <- data.frame(S)
   S_sf <- st_as_sf(S_df, coords = c("x", "y"))
-  window_keep<-lengths(st_is_within_distance(S_sf,square,dist=R))==0 # edge correction
-  
-  # GET PAIRWISE DISTANCE OF POINTS
-  S_dist1<-as.vector(as.matrix(rdist(S_df[window_keep,],S_df[window_keep,])))
-  S_dist2<-as.vector(as.matrix(rdist(S_df[window_keep,],S_df[!window_keep,])))
-  temp<-S_dist1[which((S_dist1<R)&(S_dist1>0))]
-  S_dist1R<-unique(temp) # unique because palm intensity is symmetric
-  S_dist2R<-S_dist2[which((S_dist2<R)&(S_dist2>0))]
   
   # MAKE GRID
   grid<-as.matrix(expand.grid(seq(1/nx/2,wsize-1/nx/2,length.out=nx*wsize),seq(1/nx/2,wsize-1/nx/2,length.out=nx*wsize)))
@@ -45,7 +36,7 @@ data_clean<-function(S,R,wsize,dr=0.1/500,nx=20){
   dS_counts<-grid_counts_1d(dG,S_distR)
   dG_counts<-grid_counts_1d(dG,G_distR)
   
-  return(list(window_keep=window_keep,S_dist1R=S_dist1R,S_dist2R=S_dist2R,R=R,dr=dr,dG=dG,
+  return(list(R=R,dr=dr,dG=dG,
               dG_counts=dG_counts,dS_counts=dS_counts,S_distR=S_distR,G_distR=G_distR,dx=1/nx^2))
 }
 
