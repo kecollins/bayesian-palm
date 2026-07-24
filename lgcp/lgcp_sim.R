@@ -57,13 +57,20 @@ set.seed(0) # set seed
 disc_palm_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE)
 
 #### FIT FULL LIKELIHOOD MODEL
-full_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize,iters=100,burn=1)
+set.seed(0) # set seed
+full_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize)
 
 # ------------------------------------------------------------------------------#
 #### SIMULATION SETTING (2) -- expected 1200 points, domain: [0,1]^2
 rho<-1200
 mu<-log(rho)-sig2/2
 wsize<-1
+
+nsim<-10
+
+#### SIMULATE DATA
+set.seed(0) # set seed
+#simulate_lgcp_data(nsim,mu,sig2,phi,wsize)
 
 #### FIT PALM MODELS
 # R = 0.2

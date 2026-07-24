@@ -354,7 +354,7 @@ full_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsiz,iters=10000,burn=1000){
           cores = 1,              # number of cores (could use one per chain)
           refresh = 100,             # no progress shown
           init=list(list(rho=rho,lsig2=0,lphi=-2.3)),
-          pars=c("W","Sigma"),
+          pars=c("W","W0","Sigma"),
           include=FALSE
         )
       })

@@ -5,7 +5,7 @@ bootstrap_ppp<-function(nsim,model,pars=NULL,dpp_object=NULL,win){
   if(model=="LGCP"){
     S_boot<-rLGCP(model="exponential",mu=pars$mu,param=pars$pars,win=win,nsim=nsim)
   } else if(model=="Thomas"){
-    S_boot<-rThomas(kappa=pars$kappa,scale=pars$scale,mu=pars$mu,win=win,nsim=nsim)
+    S_boot<-rThomas(kappa=pars$kappa,scale=sqrt(pars$sig2),mu=pars$mu,win=win,nsim=nsim)
   } else if(model=="dppGauss"){
     simulate.dppm(object=dpp_object,W=win,nsim=nsim)
   }
@@ -48,9 +48,9 @@ find_eta<-function(y_mean,y_qs,init_interval=c(0,5),alpha,truth){
     eta<-mean(interval)
     eta_qs<-y_mean+eta*y_qs
     cov<-mean((eta_qs[,1]<truth)*(eta_qs[,2]>truth))
-    if(cov<(1-alpha-0.02)){
+    if(cov<(1-alpha)){
       interval[1]<-eta
-    } else if(cov>(1-alpha+0.02)){
+    } else if(cov>(1-alpha)){
       interval[2]<-eta
     } else{
       stop<-TRUE
@@ -90,6 +90,18 @@ lgcp_d_lamP<-function(d,rho,lsig2,lphi){
   return(cbind(d1,d2,d3))
 }
 
+thomas_lamP<-function(d,rho,lnu,lsig2){
+  rho+exp(lnu)/(4*pi*exp(lsig2))*exp(-d^2/(4*exp(lsig2)))
+}
+
+thomas_d_lamP<-function(d,rho,lnu,lsig2){
+  d1<-1
+  d2<-exp(lnu)/(4*pi*exp(lsig2))*exp(-d^2/(4*exp(lsig2)))
+  d3<-exp(lnu)*(-4*exp(-lsig2-d^2/(4*exp(lsig2)))+exp((-8*exp(lsig2)*lsig2-d^2)/(4*exp(lsig2)))*d^2)/(16*pi)
+  
+  return(cbind(d1,d2,d3))
+}
+
 score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
   apply(2*d_lamP(data$S_distR,rho,lsig2,lphi)/lamP(data$S_distR,rho,lsig2,lphi),2,sum)-
     apply(d_lamP(data$G_distR,rho,lsig2,lphi)*data$dx,2,sum)
@@ -100,4 +112,11 @@ disc_score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
   apply(2*data$dS_counts*d_lamP(data$dG,rho,lsig2,lphi)/lamP(data$dG,rho,lsig2,lphi),2,sum)-
     apply(data$dG_counts*d_lamP(data$dG,rho,lsig2,lphi)*data$dx,2,sum)
 }
+
+thomas_score_eval<-function(data,rho,lnu,lsig2,d_lamP,lamP){
+  apply(2*data$dS_counts*d_lamP(data$dG,rho,lnu,lsig2)/lamP(data$dG,rho,lnu,lsig2),2,sum)-
+    apply(data$dG_counts*d_lamP(data$dG,rho,lnu,lsig2)*data$dx,2,sum)
+}
+
+
 

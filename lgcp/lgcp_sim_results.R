@@ -1,10 +1,13 @@
 rho_sd<-1
 S_all<-readRDS(paste0('sim_output/lgcp/sim_data_',round(mu),'_',wsize,'.rds'))
 palm_out<-readRDS(paste0('sim_output/lgcp/palm_output_',0.2,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',500,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
 disc_palm_out_0.2_250<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',250,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
 disc_palm_out_0.2_750<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',750,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
-disc_palm_out_0.4<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
+#disc_palm_out_0.4<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
 full_out<-readRDS(paste0('sim_output/lgcp/full_output_',round(mu),'_',wsize,'.rds'))
+
+# empirical
 
 ### TEMPORARY REMOVE LATER
 ind<-which(unlist(lapply(disc_palm_out_0.4,\(x) class(x)))=="character")
@@ -13,6 +16,7 @@ disc_palm_out_0.4[ind]<-NULL
 
 ### COMPUTATION TIMES IN MINUTES
 ## MEAN
+full_time<-round(mean(unlist(lapply(full_out, \(x) x$time/60))),2)
 palm_time<-round(apply(t(matrix(unlist(lapply(palm_out, \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
 disc_palm_time_0.2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
 disc_palm_time_0.4<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
@@ -28,26 +32,32 @@ round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) c(x$init_time,x$cal2_
 
 
 # BIASES FROM POSTERIOR MEANS
+apply(t(matrix(unlist(lapply(full_out, \(x) x$full_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(palm_out, \(x) x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
 
 # RMSES FROM POSTERIOR MEANS
+sqrt(apply(t(matrix(unlist(lapply(full_out, \(x) (x$full_post_output[,1]-c(mu,log(sig2),log(phi)))^2)),nrow=3)),2,mean))
 sqrt(apply(t(matrix(unlist(lapply(palm_out, \(x) (x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))^2)),nrow=3)),2,mean))
 sqrt(apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) (x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))^2)),nrow=3)),2,mean))
 sqrt(apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) (x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))^2)),nrow=3)),2,mean))
 
 # COVERAGES
+apply(t(matrix(unlist(lapply(full_out, \(x) (x$full_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$full_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(palm_out, \(x) (x$palm_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$palm_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) (x$palm_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$palm_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) (x$palm_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$palm_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 
 apply(t(matrix(unlist(lapply(palm_out, \(x) (x$cal1_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$cal1_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) (x$cal1_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$cal1_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
+apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) (x$cal1_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$cal1_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) (x$cal1_post_output[,4]<c(mu,log(sig2),log(phi)))*(x$cal1_post_output[,5]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 
 apply(t(matrix(unlist(lapply(palm_out, \(x) (x$cal2_post_output[,2]<c(mu,log(sig2),log(phi)))*(x$cal2_post_output[,3]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) (x$cal2_post_output[,2]<c(mu,log(sig2),log(phi)))*(x$cal2_post_output[,3]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
+apply(t(matrix(unlist(lapply(disc_palm_out_0.2_250, \(x) (x$cal2_post_output[,2]<c(mu,log(sig2),log(phi)))*(x$cal2_post_output[,3]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
+apply(t(matrix(unlist(lapply(disc_palm_out_0.2_750, \(x) (x$cal2_post_output[,2]<c(mu,log(sig2),log(phi)))*(x$cal2_post_output[,3]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) (x$cal2_post_output[,2]<c(mu,log(sig2),log(phi)))*(x$cal2_post_output[,3]>c(mu,log(sig2),log(phi))))),nrow=3)),2,mean)
 
 # CI LENGTH
@@ -61,3 +71,41 @@ apply(t(matrix(unlist(lapply(palm_out, \(x) x$cal2_post_output[,1]-c(mu,log(sig2
 apply(t(matrix(unlist(lapply(disc_palm_out_0.2_250, \(x) x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
 apply(t(matrix(unlist(lapply(disc_palm_out_0.2_750, \(x) x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
 
+
+
+
+
+#### RHO=1200
+rho_sd<-1
+rho<-1200
+mu<-log(rho)-sig2/2
+wsize<-1
+
+disc_palm_out_0.2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',500,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.4<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',500,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
+
+apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
+apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) x$cal2_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean)
+
+
+
+
+
+
+
+#####
+full_out[[1]]$full_post_output[1,1]+exp(full_out[[1]]$full_post_output[2,1])
+mu+exp(sig2)
+
+plot(unlist(lapply(full_out,\(x) x$full_post_output[1,1])),unlist(lapply(full_out,\(x) x$full_post_output[2,1])))
+
+t(matrix(unlist(lapply(full_out, \(x) x$full_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3))
+full_out[[38]]$full_post_output
+
+temp<-unlist(lapply(S_all,\(x) kppm(x,cluster="LGCP")$par[1]))
+
+plot(temp,unlist(lapply(full_out, \(x) exp(x$full_post_output[2,1]))))
+unlist(lapply(full_out, \(x) x$full_post_output[2,4]/2))<log(sig2)
+unlist(lapply(full_out, \(x) x$full_post_output[2,5]/2))>log(sig2)
+
+sd(unlist(lapply(full_out, \(x) x$full_post_output[1,1]-mu))/unlist(lapply(full_out, \(x) x$full_post_output[1,3])))
