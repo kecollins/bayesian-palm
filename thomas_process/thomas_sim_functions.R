@@ -125,14 +125,14 @@ disc_palm_thomas_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirica
       # CALIBRATE NU
       nu_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
       nu_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-nu_mean
-      nu_eta<-find_eta(y_mean=nu_mean,y_qs=nu_qs,alpha=0.05,truth=post_mean[1])
+      nu_eta<-find_eta(y_mean=nu_mean,y_qs=nu_qs,alpha=0.05,truth=post_mean[2])
       nu_post<-rstan::extract(post,pars="nu")$nu
       calibrated_nu<-mean(nu_post)+nu_eta*(nu_post-mean(nu_post))
       
       # CALIBRATE LSIG2
       lsig2_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
       lsig2_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-lsig2_mean
-      lsig2_eta<-find_eta(y_mean=lsig2_mean,y_qs=lsig2_qs,alpha=0.05,truth=post_mean[1])
+      lsig2_eta<-find_eta(y_mean=lsig2_mean,y_qs=lsig2_qs,alpha=0.05,truth=post_mean[3])
       lsig2_post<-rstan::extract(post,pars="lsig2")$lsig2
       calibrated_lsig2<-mean(lsig2_post)+lsig2_eta*(lsig2_post-mean(lsig2_post))
 
