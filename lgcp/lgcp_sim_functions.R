@@ -211,7 +211,7 @@ disc_palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=
       
       score_out<-foreach(k=c(1:1000),.combine='rbind')%dopar%{
         S_temp<-rLGCP(model="exponential",mu=log(post_mean[4])-exp(post_mean[5])/2,param=list(var=exp(post_mean[5]),scale=exp(post_mean[6])))
-        if(S_temp$n==0){skip}
+        if(S_temp$n==0){next}
         
         data_temp<-data_clean(S_temp,R,wsize)
         
@@ -283,16 +283,16 @@ disc_palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=
       calibrated_mu<-mean(mu_post)+mu_eta*(mu_post-mean(mu_post))
       
       # CALIBRATE LSIG2
-      lsig2_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
-      lsig2_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-lsig2_mean
-      lsig2_eta<-find_eta(y_mean=lsig2_mean,y_qs=lsig2_qs,alpha=0.05,truth=post_mean[1])
+      lsig2_mean<-unlist(lapply(boot_out,function(x) x[2,1]))
+      lsig2_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[2,2:3])),nrow=2))-lsig2_mean
+      lsig2_eta<-find_eta(y_mean=lsig2_mean,y_qs=lsig2_qs,alpha=0.05,truth=post_mean[5])
       lsig2_post<-rstan::extract(post,pars="lsig2")$lsig2
       calibrated_lsig2<-mean(lsig2_post)+lsig2_eta*(lsig2_post-mean(lsig2_post))
       
       # CALIBRATE LPHI
-      lphi_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
-      lphi_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-lphi_mean
-      lphi_eta<-find_eta(y_mean=lphi_mean,y_qs=lphi_qs,alpha=0.05,truth=post_mean[1])
+      lphi_mean<-unlist(lapply(boot_out,function(x) x[3,1]))
+      lphi_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[3,2:3])),nrow=2))-lphi_mean
+      lphi_eta<-find_eta(y_mean=lphi_mean,y_qs=lphi_qs,alpha=0.05,truth=post_mean[6])
       lphi_post<-rstan::extract(post,pars="lphi")$lphi
       calibrated_lphi<-mean(lphi_post)+lphi_eta*(lphi_post-mean(lphi_post))
     })

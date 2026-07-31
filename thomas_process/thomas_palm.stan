@@ -38,14 +38,16 @@ parameters {
 transformed parameters {
   real<lower=0> sig2;
   real<lower=0> nu;
-  real mu;
+  real <lower=0> mu;
+  real lmu;
   sig2 = exp(lsig2);
   nu = exp(lnu);
   mu = rho/nu;
+  lmu = log(mu);
 }
 model {
   target += palm_loglik(dS_counts, dG, dG_counts, dx, rho, nu, sig2, dN, eta);
   target += normal_lpdf(rho | rho_mean, rho_sd);
-  target += normal_lpdf(lnu | 0, 10);
-  target += normal_lpdf(lsig2 | 0, 3);
+  target += normal_lpdf(lnu | 0, 5);
+  target += normal_lpdf(lsig2 | -5, 3);
 }

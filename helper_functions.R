@@ -78,26 +78,27 @@ grid_counts_1d<-function(grid,x){
 }
 
 ### CALCULATING SCORES
-lgcp_lamP<-function(d,rho,lsig2,lphi){
-  rho*exp(exp(lsig2)*exp(-d/exp(lphi)))
+lgcp_lamP<-function(d,mu,lsig2,lphi){
+  exp(mu+exp(lsig2)/2)*exp(exp(lsig2)*exp(-d/exp(lphi)))
 }
 
-lgcp_d_lamP<-function(d,rho,lsig2,lphi){
-  d1<-exp(exp(lsig2)*exp(-d/exp(lphi)))
-  d2<-rho*exp(lsig2)*exp(-d/exp(lphi))*exp(exp(lsig2)*exp(-d/exp(lphi)))
-  d3<-rho*d*exp(exp(lsig2-d*exp(-lphi))+lsig2-lphi-d*exp(-lphi))
+### NEED TO FIX
+lgcp_d_lamP<-function(d,mu,lsig2,lphi){
+  d1<-exp(mu+exp(lsig2)/2)*exp(exp(lsig2)*exp(-d/exp(lphi)))
+  d2<-(exp(lsig2-exp(-lphi)*d)+exp(lsig2)/2)*exp(exp(lsig2-exp(-lphi)*d)+exp(lsig2)/2+mu)
+  d3<-d*exp(exp(lsig2-d*exp(-lphi))-d*exp(-lphi)-lphi+exp(lsig2)/2+lsig2+mu)
   
   return(cbind(d1,d2,d3))
 }
 
-thomas_lamP<-function(d,rho,lnu,lsig2){
-  rho+exp(lnu)/(4*pi*exp(lsig2))*exp(-d^2/(4*exp(lsig2)))
+thomas_lamP<-function(d,lmu,lnu,lsig2){
+  exp(lmu+lnu)+exp(lnu)/(4*pi*exp(lsig2))*exp(-d^2/(4*exp(lsig2)))
 }
 
-thomas_d_lamP<-function(d,rho,lnu,lsig2){
-  d1<-1
-  d2<-exp(lnu)/(4*pi*exp(lsig2))*exp(-d^2/(4*exp(lsig2)))
-  d3<-exp(lnu)*(-4*exp(-lsig2-d^2/(4*exp(lsig2)))+exp((-8*exp(lsig2)*lsig2-d^2)/(4*exp(lsig2)))*d^2)/(16*pi)
+thomas_d_lamP<-function(d,lmu,lnu,lsig2){
+  d1<-exp(lmu+lnu)
+  d2<-exp(lmu+lnu)+exp(lnu)/(4*pi*exp(lsig2))*exp(-d^2/(4*exp(lsig2)))
+  d3<-exp(lmu+lnu)+exp(lnu)*(-4*exp(-lsig2-d^2/(4*exp(lsig2)))+exp((-8*exp(lsig2)*lsig2-d^2)/(4*exp(lsig2)))*d^2)/(16*pi)
   
   return(cbind(d1,d2,d3))
 }
@@ -113,9 +114,9 @@ disc_score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
     apply(data$dG_counts*d_lamP(data$dG,rho,lsig2,lphi)*data$dx,2,sum)
 }
 
-thomas_score_eval<-function(data,rho,lnu,lsig2,d_lamP,lamP){
-  apply(2*data$dS_counts*d_lamP(data$dG,rho,lnu,lsig2)/lamP(data$dG,rho,lnu,lsig2),2,sum)-
-    apply(data$dG_counts*d_lamP(data$dG,rho,lnu,lsig2)*data$dx,2,sum)
+thomas_score_eval<-function(data,lmu,lnu,lsig2,d_lamP,lamP){
+  apply(2*data$dS_counts*d_lamP(data$dG,lmu,lnu,lsig2)/lamP(data$dG,lmu,lnu,lsig2),2,sum)-
+    apply(data$dG_counts*d_lamP(data$dG,lmu,lnu,lsig2)*data$dx,2,sum)
 }
 
 

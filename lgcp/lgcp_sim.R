@@ -6,7 +6,6 @@ library(spatstat)
 library(sf)
 library(fields)
 library(rstan)
-library(cmdstanr)
 library(doParallel)
 #cl<-makeCluster(10)
 #registerDoParallel(cl)
@@ -87,7 +86,7 @@ disc_palm_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=TRUE)
 full_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize)
 
 # ------------------------------------------------------------------------------#
-#### SIMULATION SETTING (2) -- expected 1200 points, domain: [0,2]^2
+#### SIMULATION SETTING (3) -- expected 1200 points, domain: [0,2]^2
 rho<-300
 mu<-log(rho)-sig2/2
 wsize<-2
