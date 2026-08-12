@@ -7,8 +7,6 @@ library(sf)
 library(fields)
 library(rstan)
 library(doParallel)
-#cl<-makeCluster(10)
-#registerDoParallel(cl)
 registerDoParallel(cores=10)
 
 #### SIMULATION SETTINGS (UNCHANGING)
@@ -59,6 +57,7 @@ disc_palm_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE
 set.seed(0) # set seed
 full_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize)
 
+
 # ------------------------------------------------------------------------------#
 #### SIMULATION SETTING (2) -- expected 1200 points, domain: [0,1]^2
 rho<-1200
@@ -83,13 +82,16 @@ set.seed(0) # set seed
 disc_palm_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=TRUE)
 
 #### FIT FULL LIKELIHOOD MODEL
-full_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize)
+set.seed(0)
+full_lgcp_sim_study_timing(nsim=nsim,mu,sig2,phi,wsize)
 
 # ------------------------------------------------------------------------------#
 #### SIMULATION SETTING (3) -- expected 1200 points, domain: [0,2]^2
 rho<-300
 mu<-log(rho)-sig2/2
 wsize<-2
+
+nsim<-10
 
 #### SIMULATE DATA
 set.seed(0) # set seed
@@ -107,6 +109,7 @@ set.seed(0) # set seed
 disc_palm_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=TRUE)
 
 #### FIT FULL LIKELIHOOD MODEL
-full_lgcp_sim_study(nsim=nsim,mu,sig2,phi,wsize)
+set.seed(0)
+full_lgcp_sim_study_timing(nsim=nsim,mu,sig2,phi,wsize,iters=100,burn=10)
 
 

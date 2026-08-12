@@ -1,4 +1,4 @@
-simulate_thomas_data<-function(nsim,mu,nu,si2,wsize){
+simulate_thomas_data<-function(nsim,mu,nu,sig2,wsize){
   S<-rThomas(nsim=nsim,kappa=mu,mu=nu,scale=sqrt(sig2),win = owin(c(0,wsize),c(0,wsize)))
   saveRDS(S,paste0('sim_output/thomas_process/sim_data_',mu*nu,'_',wsize,'.rds'))
 }

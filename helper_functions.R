@@ -103,15 +103,27 @@ thomas_d_lamP<-function(d,lmu,lnu,lsig2){
   return(cbind(d1,d2,d3))
 }
 
-score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
-  apply(2*d_lamP(data$S_distR,rho,lsig2,lphi)/lamP(data$S_distR,rho,lsig2,lphi),2,sum)-
-    apply(d_lamP(data$G_distR,rho,lsig2,lphi)*data$dx,2,sum)
+dpp_lamP<-function(d,rho,lalpha){
+  rho*(1-(exp(-(d/exp(lalpha))^2))^2)
+}
+
+dpp_d_lamP<-function(d,rho,lalpha){
+  d1<-(1-(exp(-(d/exp(lalpha))^2))^2)
+  d2<-4*rho*d^2*exp(-2*(d/exp(lalpha))^2-2*lalpha)
+  
+  return(cbind(d1,d2))
 }
 
 
-disc_score_eval<-function(data,rho,lsig2,lphi,d_lamP,lamP){
-  apply(2*data$dS_counts*d_lamP(data$dG,rho,lsig2,lphi)/lamP(data$dG,rho,lsig2,lphi),2,sum)-
-    apply(data$dG_counts*d_lamP(data$dG,rho,lsig2,lphi)*data$dx,2,sum)
+score_eval<-function(data,mu,lsig2,lphi,d_lamP,lamP){
+  apply(2*d_lamP(data$S_distR,mu,lsig2,lphi)/lamP(data$S_distR,mu,lsig2,lphi),2,sum)-
+    apply(d_lamP(data$G_distR,mu,lsig2,lphi)*data$dx,2,sum)
+}
+
+
+disc_score_eval<-function(data,mu,lsig2,lphi,d_lamP,lamP){
+  apply(2*data$dS_counts*d_lamP(data$dG,mu,lsig2,lphi)/lamP(data$dG,rho,lsig2,lphi),2,sum)-
+    apply(data$dG_counts*d_lamP(data$dG,mu,lsig2,lphi)*data$dx,2,sum)
 }
 
 thomas_score_eval<-function(data,lmu,lnu,lsig2,d_lamP,lamP){
@@ -119,5 +131,8 @@ thomas_score_eval<-function(data,lmu,lnu,lsig2,d_lamP,lamP){
     apply(data$dG_counts*d_lamP(data$dG,lmu,lnu,lsig2)*data$dx,2,sum)
 }
 
-
+dpp_score_eval<-function(data,rho,lalpha,d_lamP,lamP){
+  apply(2*data$dS_counts*d_lamP(data$dG,rho,lalpha)/lamP(data$dG,rho,lalpha),2,sum)-
+    apply(data$dG_counts*d_lamP(data$dG,rho,lalpha)*data$dx,2,sum)
+}
 

@@ -124,15 +124,15 @@ palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=TRUE,
       calibrated_mu<-mean(mu_post)+mu_eta*(mu_post-mean(mu_post))
       
       # CALIBRATE LSIG2
-      lsig2_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
-      lsig2_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-lsig2_mean
+      lsig2_mean<-unlist(lapply(boot_out,function(x) x[2,1]))
+      lsig2_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[2,2:3])),nrow=2))-lsig2_mean
       lsig2_eta<-find_eta(y_mean=lsig2_mean,y_qs=lsig2_qs,alpha=0.05,truth=post_mean[5])
       lsig2_post<-rstan::extract(post,pars="lsig2")$lsig2
       calibrated_lsig2<-mean(lsig2_post)+lsig2_eta*(lsig2_post-mean(lsig2_post))
       
       # CALIBRATE LPHI
-      lphi_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
-      lphi_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-lphi_mean
+      lphi_mean<-unlist(lapply(boot_out,function(x) x[3,1]))
+      lphi_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[3,2:3])),nrow=2))-lphi_mean
       lphi_eta<-find_eta(y_mean=lphi_mean,y_qs=lphi_qs,alpha=0.05,truth=post_mean[6])
       lphi_post<-rstan::extract(post,pars="lphi")$lphi
       calibrated_lphi<-mean(lphi_post)+lphi_eta*(lphi_post-mean(lphi_post))
@@ -211,14 +211,16 @@ disc_palm_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=
       
       score_out<-foreach(k=c(1:1000),.combine='rbind')%dopar%{
         S_temp<-rLGCP(model="exponential",mu=log(post_mean[4])-exp(post_mean[5])/2,param=list(var=exp(post_mean[5]),scale=exp(post_mean[6])))
-        if(S_temp$n==0){next}
+        if(S_temp$n==0){
+          return(c(NA,NA,NA))
+        }
         
         data_temp<-data_clean(S_temp,R,wsize)
         
-        return(disc_score_eval(data_temp,rho=post_mean[4],lsig2=post_mean[5],lphi=post_mean[6],d_lamP = lgcp_d_lamP,lamP=lgcp_lamP))
+        return(disc_score_eval(data_temp,mu=post_mean[1],lsig2=post_mean[5],lphi=post_mean[6],d_lamP = lgcp_d_lamP,lamP=lgcp_lamP))
       }
       
-      J<-cov(score_out)
+      J<-cov(score_out,use="na.or.complete")
       
       eta<-1/sum(eigen(H_inv%*%J)$values)
       
@@ -348,13 +350,13 @@ full_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsiz,iters=10000,burn=1000){
       time<-system.time({
         # RUN STAN MODEL
         post_full <- sampling(
-          model,  # Stan program
-          data = stan_data,    # named list of data
-          chains = 1,             # number of Markov chains
-          warmup = burn,          # number of warmup iterations per chain
-          iter = iters,            # total number of iterations per chain
-          cores = 1,              # number of cores (could use one per chain)
-          refresh = 100,             # no progress shown
+          model,
+          data = stan_data,
+          chains = 1,
+          warmup = burn,
+          iter = iters,
+          cores = 1,
+          refresh = 100,
           init=list(list(rho=rho,lsig2=0,lphi=-2.3)),
           pars=c("W","W0","Sigma"),
           include=FALSE
@@ -374,6 +376,57 @@ full_lgcp_sim_study<-function(nsim,mu,sig2,phi,wsiz,iters=10000,burn=1000){
   saveRDS(all_out,paste0('sim_output/lgcp/full_output_',round(mu),'_',wsize,'.rds'))
 }
 
+full_lgcp_sim_study_timing<-function(nsim,mu,sig2,phi,wsiz,iters=10000,burn=1000){
+  S_all<-readRDS(paste0('sim_output/lgcp/sim_data_',round(mu),'_',wsize,'.rds'))
+  model<-stan_model('lgcp/lgcp_full.stan')
+  
+  # GRID
+  nx <- 20*wsize
+  grid<-as.matrix(expand.grid(seq(1/nx/2,wsize-1/nx/2,length.out=nx),seq(1/nx/2,wsize-1/nx/2,length.out=nx)))
+  dist_mat<-rdist(grid)
+  
+  all_out<-foreach(k=c(1:nsim))%dopar%{
+    S<-S_all[[k]]
+    print(k)
+    
+    points<-as.matrix(as.data.frame(S))
+    y<-grid_counts(grid,points)
+    
+    # SETUP STAN DATA
+    stan_data<-list(
+      N=nrow(grid),
+      dx=1/nx^2,
+      y=y,
+      d=dist_mat
+    )
+    
+    time<-system.time({
+      # RUN STAN MODEL
+      post_full <- sampling(
+        model,  # Stan program
+        data = stan_data,    # named list of data
+        chains = 1,             # number of Markov chains
+        warmup = burn,          # number of warmup iterations per chain
+        iter = iters,            # total number of iterations per chain
+        cores = 1,              # number of cores (could use one per chain)
+        refresh = 1,             # no progress shown
+        init=list(list(rho=rho,lsig2=0,lphi=-2.3)),
+        pars=c("W","W0","Sigma"),
+        include=FALSE
+      )
+    })
+    
+    full_post_output<-summary(post_full,pars=c("mu","lsig2","lphi"),c(0.025,0.975))$summary
+    
+    out<-list(full_post_output=full_post_output,time=time[3])
+    rm(post_full)
+    return(out)
+  }
+  
+  
+  
+  saveRDS(all_out,paste0('sim_output/lgcp/full_output_timing_',round(mu),'_',wsize,'.rds'))
+}
 
 ### ONE OFF MODEL FIT WRAPPER
 fit_palm_lgcp<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000){
