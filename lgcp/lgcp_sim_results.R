@@ -1,3 +1,4 @@
+library(kableExtra)
 
 # SIMULATION (1) RESULTS
 wsize<-1
@@ -11,8 +12,81 @@ disc_palm_out_0.4<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',50
 disc_palm_out_0.4_NE<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',500,'_',100,'_',round(mu),'_',wsize,'.rds'))
 full_out<-readRDS(paste0('sim_output/lgcp/full_output_',round(mu),'_',wsize,'.rds'))
 
+# SIMULATION (2) RESULTS
+wsize<-1
+mu<-log(1200)-1/2
+S_all_sim2<-readRDS(paste0('sim_output/lgcp/sim_data_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.2_sim2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.4_sim2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
+full_out_sim2<-readRDS(paste0('sim_output/lgcp/full_output_timing_',round(mu),'_',wsize,'.rds'))
+
+# SIMULATION (3) RESULTS
+wsize<-2
+mu<-log(300)-1/2
+S_all_sim3<-readRDS(paste0('sim_output/lgcp/sim_data_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.2_sim3<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.4_sim3<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
+full_out_sim3<-readRDS(paste0('sim_output/lgcp/full_output_timing_',round(mu),'_',wsize,'.rds'))
+
 
 # ------------------------------------------------------------------------------#
+### COMPUTATION TIMES IN MINUTES
+# RUNTIMES
+full_time_sim1<-round(mean(unlist(lapply(full_out[1:10], \(x) x$time/60))),2)
+disc_palm_time_0.2_sim1<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
+disc_palm_time_0.4_sim1<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
+
+full_time_sim2<-round(mean(unlist(lapply(full_out_sim2[1:10], \(x) x$time/60))),2)
+disc_palm_time_0.2_sim2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_sim2[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
+disc_palm_time_0.4_sim2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4_sim2[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
+
+full_time_sim3<-round(mean(unlist(lapply(full_out_sim3[1:10], \(x) x$time/60))),2)
+disc_palm_time_0.2_sim3<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_sim3[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
+disc_palm_time_0.4_sim3<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4_sim3[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
+
+
+# ESS
+full_ESS_sim1<-round(apply(t(matrix(unlist(lapply(full_out[1:10], \(x) x$full_post_output[,6]/(x$time))),nrow=3)),2,mean),2)
+disc_0.2_ESS_sim1<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2[1:10], \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
+disc_0.4_ESS_sim1<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4[1:10], \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
+
+full_ESS_sim2<-round(apply(t(matrix(unlist(lapply(full_out_sim2[1:10], \(x) x$full_post_output[,6]/(x$time))),nrow=3)),2,mean),2)
+disc_0.2_ESS_sim2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_sim2[1:10], \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
+disc_0.4_ESS_sim2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4_sim2[1:10], \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
+
+full_ESS_sim3<-round(apply(t(matrix(unlist(lapply(full_out_sim3[1:10], \(x) x$full_post_output[,6]/(x$time))),nrow=3)),2,mean),2)
+disc_0.2_ESS_sim3<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_sim3[1:10], \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
+disc_0.4_ESS_sim3<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4_sim3[1:10], \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
+
+
+## ADJUST FULL TIME SIM 3 TO ACCOUNT FOR ONLY 10 WARMUP, 100 ITERATIONS
+full_ESS_sim3<-NA
+full_time_sim3<-full_time_sim3*100
+
+time_df<-data.frame(rbind(c(full_time_sim1,NA,NA,full_time_sim1,full_ESS_sim1[2]),
+                          c(disc_palm_time_0.2_sim1,sum(disc_palm_time_0.2_sim1[c(1,3)]),disc_0.2_ESS_sim1[2]),
+                          c(disc_palm_time_0.4_sim1,sum(disc_palm_time_0.4_sim1[c(1,3)]),disc_0.4_ESS_sim1[2]),
+                          c(full_time_sim2,NA,NA,full_time_sim2,full_ESS_sim2[2]),
+                          c(disc_palm_time_0.2_sim2,sum(disc_palm_time_0.2_sim2[c(1,3)]),disc_0.2_ESS_sim2[2]),
+                          c(disc_palm_time_0.4_sim2,sum(disc_palm_time_0.4_sim2[c(1,3)]),disc_0.4_ESS_sim2[2]),
+                          c(full_time_sim3,NA,NA,full_time_sim3,full_ESS_sim3[2]),
+                          c(disc_palm_time_0.2_sim3,sum(disc_palm_time_0.2_sim3[c(1,3)]),disc_0.2_ESS_sim3[2]),
+                          c(disc_palm_time_0.4_sim3,sum(disc_palm_time_0.4_sim3[c(1,3)]),disc_0.4_ESS_sim3[2])))
+
+time_df<-cbind(c("FL","PLE_0.2","PLE_0.4","FL","PLE_0.2","PLE_0.4","FL","PLE_0.2","PLE_0.4"),time_df)
+colnames(time_df)<-NULL
+time_df
+# ------------------------------------------------------------------------------#
+
+
+
+# ------------------------------------------------------------------------------#
+# TRUE VALUES
+wsize<-1
+sig2<-1
+phi<-0.1
+mu<-log(300)-1/2
+
 ### POINT ESTIMATION
 # BIASES FROM POSTERIOR MEANS
 bias_full<-round(apply(t(matrix(unlist(lapply(full_out, \(x) x$full_post_output[,1]-c(mu,log(sig2),log(phi)))),nrow=3)),2,mean),2)
@@ -90,40 +164,25 @@ lphi_df<-as.data.frame(rbind(c(bias_full[3],rmse_full[3],paste0(cov_full[3]," ("
                               c(bias_0.4[3],rmse_0.4[3],paste0(cov_0.4[3]," (",length_0.4[3],")"),paste0(cov_0.4_1[3]," (",length_0.4_1[3],")"),paste0(cov_0.4_2[3]," (",length_0.4_2[3],")")),
                               c(bias_0.4_NE[3],rmse_0.4_NE[3],paste0(cov_0.4_NE[3]," (",length_0.4_NE[3],")"),paste0(cov_0.4_1_NE[3]," (",length_0.4_1_NE[3],")"),paste0(cov_0.4_2_NE[3]," (",length_0.4_2_NE[3],")"))))
 
-rbind(mu_df,lsig2_df,lphi_df)
+point_est_df<-data.frame(cbind(mu_df[,1],lsig2_df[,1],lphi_df[,1],mu_df[,2],lsig2_df[,2],lphi_df[,2]))
+rownames(point_est_df)<-c("FL","PLE_0.2","PL_0.2","PLE_0.4","PL_0.4")
+colnames(point_est_df)<-NULL
+kable(point_est_df,format = "latex",align="c")
+
+cov_df<-data.frame(cbind(mu_df[,3:5],lsig2_df[,3:5],lphi_df[,3:5]))
+rownames(cov_df)<-c("FL","PLE_0.2","PL_0.2","PLE_0.4","PL_0.4")
+colnames(cov_df)<-NULL
+kable(cov_df,format = "latex",align="c")
+
+
+inference_df<-data.frame(cbind(mu_df,lsig2_df,lphi_df))
+
+kable(inference_df,format = "latex",booktabs = TRUE,align="c")
 
 # ------------------------------------------------------------------------------#
 
 
-# SIMULATION (2) RESULTS
-wsize<-1
-mu<-log(1200)-1/2
-S_all_Sim2<-readRDS(paste0('sim_output/lgcp/sim_data_',round(mu),'_',wsize,'.rds'))
-disc_palm_out_0.2_Sim2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
-disc_palm_out_0.4_Sim2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
-full_out_Sim2<-readRDS(paste0('sim_output/lgcp/full_output_',round(mu),'_',wsize,'.rds'))
 
-# SIMULATION (3) RESULTS
-wsize<-2
-mu<-log(300)-1/2
-S_all_sim2<-readRDS(paste0('sim_output/lgcp/sim_data_',round(mu),'_',wsize,'.rds'))
-disc_palm_out_0.2_sim2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
-disc_palm_out_0.4_sim2<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.4,'_',500,'_',1,'_',round(mu),'_',wsize,'.rds'))
-full_out_sim2<-readRDS(paste0('sim_output/lgcp/full_output_',round(mu),'_',wsize,'.rds'))
-
-
-# ------------------------------------------------------------------------------#
-### COMPUTATION TIMES IN MINUTES
-# RUNTIMES
-full_time<-round(mean(unlist(lapply(full_out, \(x) x$time/60))),2)
-disc_palm_time_0.2_sim1<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
-disc_palm_time_0.4<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4[1:10], \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
-
-# ESS
-full_ESS<-round(apply(t(matrix(unlist(lapply(palm_out, \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
-disc_0.2_ESS<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2, \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
-disc_0.4_ESS<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.4, \(x) x$palm_post_output[,6]/(x$init_time+x$cal2_time))),nrow=3)),2,mean),2)
-# ------------------------------------------------------------------------------#
 
 
 

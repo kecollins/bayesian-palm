@@ -25,9 +25,9 @@ simulate_dpp_data(nsim,rho,lalpha,wsize)
 # R = 0.2
 R<-0.2
 set.seed(0) # set seed
-disc_palm_dpp_sim_study(nsim=nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=TRUE) 
+disc_palm_dpp_sim_study(nsim=nsim,rho,lalpha,wsize,R,nboot=100,empirical=TRUE) 
 
 set.seed(0) # set seed
-disc_palm_dpp_sim_study(nsim=nsim,mu,sig2,phi,wsize,R,nboot=100,empirical=FALSE)
+disc_palm_dpp_sim_study(nsim=nsim,rho,lalpha,wsize,R,nboot=100,empirical=FALSE)
 # ------------------------------------------------------------------------------#
 

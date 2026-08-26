@@ -385,7 +385,7 @@ full_lgcp_sim_study_timing<-function(nsim,mu,sig2,phi,wsiz,iters=10000,burn=1000
   grid<-as.matrix(expand.grid(seq(1/nx/2,wsize-1/nx/2,length.out=nx),seq(1/nx/2,wsize-1/nx/2,length.out=nx)))
   dist_mat<-rdist(grid)
   
-  all_out<-foreach(k=c(1:nsim))%dopar%{
+  all_out<-foreach(k=c(1:nsim))%do%{
     S<-S_all[[k]]
     print(k)
     
@@ -403,13 +403,13 @@ full_lgcp_sim_study_timing<-function(nsim,mu,sig2,phi,wsiz,iters=10000,burn=1000
     time<-system.time({
       # RUN STAN MODEL
       post_full <- sampling(
-        model,  # Stan program
-        data = stan_data,    # named list of data
-        chains = 1,             # number of Markov chains
-        warmup = burn,          # number of warmup iterations per chain
-        iter = iters,            # total number of iterations per chain
-        cores = 1,              # number of cores (could use one per chain)
-        refresh = 1,             # no progress shown
+        model, 
+        data = stan_data,
+        chains = 1,
+        warmup = burn,
+        iter = iters,
+        cores = 1,
+        refresh = 10,
         init=list(list(rho=rho,lsig2=0,lphi=-2.3)),
         pars=c("W","W0","Sigma"),
         include=FALSE
@@ -417,8 +417,8 @@ full_lgcp_sim_study_timing<-function(nsim,mu,sig2,phi,wsiz,iters=10000,burn=1000
     })
     
     full_post_output<-summary(post_full,pars=c("mu","lsig2","lphi"),c(0.025,0.975))$summary
-    
-    out<-list(full_post_output=full_post_output,time=time[3])
+    print(get_elapsed_time(post_full))
+    out<-list(full_post_output=full_post_output,time=time[3],el_time=get_elapsed_time(post_full))
     rm(post_full)
     return(out)
   }
