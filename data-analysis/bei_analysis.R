@@ -89,7 +89,7 @@ post <- sampling(
   init=list(list(beta=c(-10,0,0),lsig2=0,lphi=4.14))
 )
 saveRDS(post,'sim_output/bei/post.rds')
-post<-readRDS('sim_output/bei/post.rds')
+
 
 post_mean<-get_posterior_mean(post,pars=c("beta","lsig2","lphi"))
 
@@ -138,3 +138,74 @@ for(j in c(9:20)){
   saveRDS(times,'sim_output/bei/times.rds')
   saveRDS(all_out,'sim_output/bei/all_out.rds')
 }
+
+
+
+post<-readRDS('sim_output/bei/post.rds')
+post_mean<-get_posterior_mean(post,pars=c("beta","lsig2","lphi"))
+times<-readRDS('sim_output/bei/times.rds')
+all_out<-readRDS('sim_output/bei/all_out.rds')
+
+# CALIBRATE BETA0
+beta0_mean<-unlist(lapply(all_out,function(x) x[[2]][1,1]))
+beta0_qs<-t(matrix(unlist(lapply(all_out,function(x) x[[2]][1,2:3])),nrow=2))-beta0_mean
+beta0_eta<-find_eta(y_mean=beta0_mean,y_qs=beta0_qs,alpha=0.05,init_interval=c(0,100),truth=post_mean[1])
+beta0_post<-rstan::extract(post,pars="beta[1]")$`beta[1]`
+calibrated_beta0<-mean(beta0_post)+beta0_eta*(beta0_post-mean(beta0_post))
+
+# CALIBRATE BETA1
+beta1_mean<-unlist(lapply(all_out,function(x) x[[2]][2,1]))
+beta1_qs<-t(matrix(unlist(lapply(all_out,function(x) x[[2]][2,2:3])),nrow=2))-beta1_mean
+beta1_eta<-find_eta(y_mean=beta1_mean,y_qs=beta1_qs,alpha=0.05,init_interval=c(0,100),truth=post_mean[2])
+beta1_post<-rstan::extract(post,pars="beta[2]")$`beta[2]`
+calibrated_beta1<-mean(beta1_post)+beta1_eta*(beta1_post-mean(beta1_post))
+
+# CALIBRATE BETA2
+beta2_mean<-unlist(lapply(all_out,function(x) x[[2]][3,1]))
+beta2_qs<-t(matrix(unlist(lapply(all_out,function(x) x[[2]][3,2:3])),nrow=2))-beta2_mean
+beta2_eta<-find_eta(y_mean=beta2_mean,y_qs=beta2_qs,alpha=0.05,init_interval=c(0,100),truth=post_mean[3])
+beta2_post<-rstan::extract(post,pars="beta[3]")$`beta[3]`
+calibrated_beta2<-mean(beta2_post)+beta2_eta*(beta2_post-mean(beta2_post))
+
+# CALIBRATE LSIG2
+lsig2_mean<-unlist(lapply(all_out,function(x) x[[2]][4,1]))
+lsig2_qs<-t(matrix(unlist(lapply(all_out,function(x) x[[2]][4,2:3])),nrow=2))-lsig2_mean
+lsig2_eta<-find_eta(y_mean=lsig2_mean,y_qs=lsig2_qs,alpha=0.05,init_interval=c(0,100),truth=post_mean[4])
+lsig2_post<-rstan::extract(post,pars="lsig2")$lsig2
+calibrated_lsig2<-mean(lsig2_post)+lsig2_eta*(lsig2_post-mean(lsig2_post))
+
+# CALIBRATE LPHI
+lphi_mean<-unlist(lapply(all_out,function(x) x[[2]][5,1]))
+lphi_qs<-t(matrix(unlist(lapply(all_out,function(x) x[[2]][5,2:3])),nrow=2))-lphi_mean
+lphi_eta<-find_eta(y_mean=lphi_mean,y_qs=lphi_qs,alpha=0.05,init_interval=c(0,100),truth=post_mean[5])
+lphi_post<-rstan::extract(post,pars="lphi")$lphi
+calibrated_lphi<-mean(lphi_post)+lphi_eta*(lphi_post-mean(lphi_post))
+
+X<-cbind(1,as.vector(t(bei.extra$elev$v)),as.vector(t(bei.extra$grad$v)))
+
+### RESCALED BETA ESTIMATES
+calibrated_beta0_resc<-calibrated_beta0-calibrated_beta1*mean(X[,2])/sd(X[,2])-calibrated_beta2*mean(X[,3])/sd(X[,3])
+calibrated_beta1_resc<-calibrated_beta1/sd(X[,2])
+calibrated_beta2_resc<-calibrated_beta2/sd(X[,3])
+
+### MODEL OUTPUT
+mean(calibrated_beta0_resc)
+quantile(calibrated_beta0_resc,c(0.025,0.975))
+
+mean(calibrated_beta1_resc)
+quantile(calibrated_beta1_resc,c(0.025,0.975))
+
+mean(calibrated_beta2_resc)
+quantile(calibrated_beta2_resc,c(0.025,0.975))
+
+mean(exp(calibrated_lsig2))
+quantile(exp(calibrated_lsig2),c(0.025,0.975))
+
+mean(exp(calibrated_lphi))
+quantile(exp(calibrated_lphi),c(0.025,0.975))
+
+### TIMES
+sum(get_elapsed_time(post))/60
+sum(times)/60
+all_out[[82]][[1]]/60
+

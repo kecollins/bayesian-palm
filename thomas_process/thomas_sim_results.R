@@ -27,8 +27,41 @@ cov_0.2_1_NE<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_NE,\(x) (x$ca
 cov_0.2_2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2,\(x) (x$cal2_post_output[,2]<c(log(mu),log(nu),log(sig2)))*(x$cal2_post_output[,3]>c(log(mu),log(nu),log(sig2))))),nrow=3)),2,mean),2)
 cov_0.2_2_NE<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_NE,\(x) (x$cal2_post_output[,2]<c(log(mu),log(nu),log(sig2)))*(x$cal2_post_output[,3]>c(log(mu),log(nu),log(sig2))))),nrow=3)),2,mean),2)
 
-time_0.2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2,\(x) c(x$init_time,x$cal1_time,x$cal2_time))),nrow=3)),2,mean)/60,2)
-time_0.2_NE<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_NE,\(x) c(x$init_time,x$cal1_time,x$cal2_time))),nrow=3)),2,mean)/60,2)
+length_0.2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2,\(x) x$palm_post_output[,5]-x$palm_post_output[,4])),nrow=3)),2,mean),2)
+length_0.2_NE<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_NE,\(x) x$palm_post_output[,5]-x$palm_post_output[,4])),nrow=3)),2,mean),2)
+
+length_0.2_1<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2,\(x) x$cal1_post_output[,5]-x$cal1_post_output[,4])),nrow=3)),2,mean),2)
+length_0.2_1_NE<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_NE,\(x) x$cal1_post_output[,5]-x$cal1_post_output[,4])),nrow=3)),2,mean),2)
+
+length_0.2_2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2,\(x) x$cal2_post_output[,3]-x$cal2_post_output[,2])),nrow=3)),2,mean),2)
+length_0.2_2_NE<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_NE,\(x) x$cal2_post_output[,3]-x$cal2_post_output[,2])),nrow=3)),2,mean),2)
+
+time_0.2<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2,\(x) c(x$init_time,x$init_time+x$cal1_time,x$init_time+x$cal2_time))),nrow=3)),2,mean)/60,2)
+time_0.2_NE<-round(apply(t(matrix(unlist(lapply(disc_palm_out_0.2_NE,\(x) c(x$init_time,x$init_time+x$cal1_time,x$init_time+x$cal2_time))),nrow=3)),2,mean)/60,2)
+
+ESS_0.2<-round(c(mean(unlist(lapply(disc_palm_out_0.2,\(x) x$palm_post_output[1,6]/x$init_time))),
+                 mean(unlist(lapply(disc_palm_out_0.2,\(x) x$cal1_post_output[1,6]/(x$init_time+x$cal1_time)))),
+                 mean(unlist(lapply(disc_palm_out_0.2,\(x) x$palm_post_output[1,6]/(x$init_time+x$cal2_time))))),2)
+ESS_0.2_NE<-round(c(mean(unlist(lapply(disc_palm_out_0.2_NE,\(x) x$palm_post_output[1,6]/x$init_time))),
+                 mean(unlist(lapply(disc_palm_out_0.2_NE,\(x) x$cal1_post_output[1,6]/(x$init_time+x$cal1_time)))),
+                 mean(unlist(lapply(disc_palm_out_0.2_NE,\(x) x$palm_post_output[1,6]/(x$init_time+x$cal2_time))))),2)
 
 c(bias_0.2[1],rmse_0.2[1],cov_0.2[1],cov_0.2_1[1],cov_0.2_2[1])
 bias_0.2_NE
+
+bias_df<-data.frame(rbind(c(bias_0.2,rmse_0.2),
+                          c(bias_0.2_NE,rmse_0.2_NE)))
+
+bias_df %>% kable(format="latex")
+
+cov_df<-data.frame(rbind(as.vector(t(cbind(paste0(cov_0.2, " (",length_0.2,")"),paste0(cov_0.2_1, " (",length_0.2_1,")"),
+                        paste0(cov_0.2_2, " (",length_0.2_2,")")))),
+      as.vector(t(cbind(paste0(cov_0.2_NE, " (",length_0.2_NE,")"),paste0(cov_0.2_1_NE, " (",length_0.2_1_NE,")"),
+                        paste0(cov_0.2_2_NE, " (",length_0.2_2_NE,")"))))))
+
+cov_df %>% kable(format="latex")
+
+time_df<-data.frame(rbind(c(time_0.2,ESS_0.2),
+                          c(time_0.2_NE,ESS_0.2_NE)))
+
+time_df %>% kable(format="latex")
