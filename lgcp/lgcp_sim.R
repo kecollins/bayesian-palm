@@ -22,7 +22,7 @@ wsize<-1
 
 #### SIMULATE DATA
 set.seed(0) # set seed
-#simulate_lgcp_data(nsim,mu,sig2,phi,wsize)
+simulate_lgcp_data(nsim,mu,sig2,phi,wsize)
 
 #### FIT PALM MODELS
 # R = 0.2
@@ -68,7 +68,7 @@ nsim<-10
 
 #### SIMULATE DATA
 set.seed(0) # set seed
-#simulate_lgcp_data(nsim,mu,sig2,phi,wsize)
+simulate_lgcp_data(nsim,mu,sig2,phi,wsize)
 
 #### FIT PALM MODELS
 # R = 0.2

@@ -1,3 +1,4 @@
+library(tidyverse)
 library(kableExtra)
 
 # SIMULATION (1) RESULTS
@@ -201,35 +202,44 @@ kable(inference_df,format = "latex",booktabs = TRUE,align="c")
 
 # ------------------------------------------------------------------------------#
 #### APPENDIX COMPARISON
-palm_out<-readRDS(paste0('sim_output/lgcp/palm_output_',0.2,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
-disc_palm_out_0.2_250<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',250,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
-disc_palm_out_0.2_750<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',750,'_',round(rho_sd),'_',round(mu),'_',wsize,'.rds'))
+wsize<-1
+sig2<-1
+phi<-0.1
+mu<-log(300)-1/2
+palm_out<-readRDS(paste0('sim_output/lgcp/palm_output_',0.2,'_',1,'_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.2_250<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',250,'_',1,'_',round(mu),'_',wsize,'.rds'))
+disc_palm_out_0.2_750<-readRDS(paste0('sim_output/lgcp/disc_palm_output_',0.2,'_',750,'_',1,'_',round(mu),'_',wsize,'.rds'))
 
-palm_time<-round(apply(t(matrix(unlist(lapply(palm_out, \(x) c(x$init_time,x$cal2_time,x$init_time+x$cal2_time))),nrow=3))/60,2,mean),2)
+palm_means<-t(matrix(unlist(lapply(palm_out, \(x) x$palm_post_output[,1])),nrow=3))
+disc_palm_250_means<-t(matrix(unlist(lapply(disc_palm_out_0.2_250, \(x) x$palm_post_output[,1])),nrow=3))
+disc_palm_500_means<-t(matrix(unlist(lapply(disc_palm_out_0.2[1:10], \(x) x$palm_post_output[,1])),nrow=3))
+disc_palm_750_means<-t(matrix(unlist(lapply(disc_palm_out_0.2_750, \(x) x$palm_post_output[,1])),nrow=3))
 
-palm_means<-t(matrix(unlist(lapply(palm_out, \(x) x$cal2_post_output[,1])),nrow=3))
-disc_palm_250_means<-t(matrix(unlist(lapply(disc_palm_out_0.2_250, \(x) x$cal2_post_output[,1])),nrow=3))
-disc_palm_500_means<-t(matrix(unlist(lapply(disc_palm_out_0.2[1:10], \(x) x$cal2_post_output[,1])),nrow=3))
-disc_palm_750_means<-t(matrix(unlist(lapply(disc_palm_out_0.2_750, \(x) x$cal2_post_output[,1])),nrow=3))
+df_mean<-data.frame(round(rbind(apply(palm_means-disc_palm_250_means,2,mean),
+                          apply(palm_means-disc_palm_500_means,2,mean),
+                          apply(palm_means-disc_palm_750_means,2,mean)),4))
 
-par(mfrow=c(3,3))
-plot(palm_means[,1],disc_palm_250_means[,1])
-plot(palm_means[,1],disc_palm_500_means[,1])
-plot(palm_means[,1],disc_palm_750_means[,1])
+palm_025<-t(matrix(unlist(lapply(palm_out, \(x) x$palm_post_output[,4])),nrow=3))
+disc_palm_250_025<-t(matrix(unlist(lapply(disc_palm_out_0.2_250, \(x) x$palm_post_output[,4])),nrow=3))
+disc_palm_500_025<-t(matrix(unlist(lapply(disc_palm_out_0.2[1:10], \(x) x$palm_post_output[,4])),nrow=3))
+disc_palm_750_025<-t(matrix(unlist(lapply(disc_palm_out_0.2_750, \(x) x$palm_post_output[,4])),nrow=3))
 
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,1]-disc_palm_out_0.2_250[[x]]$palm_post_output[,1]))),nrow=3)),2,mean)
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,1]-disc_palm_out_0.2[[x]]$palm_post_output[,1]))),nrow=3)),2,mean)
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,1]-disc_palm_out_0.2_750[[x]]$palm_post_output[,1]))),nrow=3)),2,mean)
+df_025<-rbind(apply(palm_025-disc_palm_250_025,2,mean),
+              apply(palm_025-disc_palm_500_025,2,mean),
+              apply(palm_025-disc_palm_750_025,2,mean))
 
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,4]-disc_palm_out_0.2_250[[x]]$palm_post_output[,4]))),nrow=3)),2,mean)
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,4]-disc_palm_out_0.2[[x]]$palm_post_output[,4]))),nrow=3)),2,mean)
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,4]-disc_palm_out_0.2_750[[x]]$palm_post_output[,4]))),nrow=3)),2,mean)
+palm_975<-t(matrix(unlist(lapply(palm_out, \(x) x$palm_post_output[,5])),nrow=3))
+disc_palm_250_975<-t(matrix(unlist(lapply(disc_palm_out_0.2_250, \(x) x$palm_post_output[,5])),nrow=3))
+disc_palm_500_975<-t(matrix(unlist(lapply(disc_palm_out_0.2[1:10], \(x) x$palm_post_output[,5])),nrow=3))
+disc_palm_750_975<-t(matrix(unlist(lapply(disc_palm_out_0.2_750, \(x) x$palm_post_output[,5])),nrow=3))
 
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,5]-disc_palm_out_0.2_250[[x]]$palm_post_output[,5]))),nrow=3)),2,mean)
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,5]-disc_palm_out_0.2[[x]]$palm_post_output[,5]))),nrow=3)),2,mean)
-apply(t(matrix(unlist(lapply(1:10,\(x) abs(palm_out[[x]]$palm_post_output[,5]-disc_palm_out_0.2_750[[x]]$palm_post_output[,5]))),nrow=3)),2,mean)
+df_975<-rbind(apply(palm_975-disc_palm_250_975,2,mean),
+              apply(palm_975-disc_palm_500_975,2,mean),
+              apply(palm_975-disc_palm_750_975,2,mean))
 
-
+options(scipen = 999)
+cbind(round(df_mean,4),round(df_025,4),round(df_975,4)) %>% kable(format="latex")
+options(scipen = 0)
 # ------------------------------------------------------------------------------#
 
 

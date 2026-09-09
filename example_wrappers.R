@@ -2,6 +2,9 @@
 fit_palm_lgcp<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000,dr=0.1/500){
   model<-stan_model('lgcp/lgcp_palm_disc.stan')
   if(empirical){rho_sd<-1} else{rho_sd<-100}
+  
+  cat("\n LGCP Example:")
+  
   # ORGANIZE DATA
   data<-data_clean(S=S,R=R,wsize=wsize,dr=dr)
   
@@ -148,6 +151,9 @@ fit_palm_lgcp<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000
 fit_palm_thomas<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000,dr=0.1/500){
   model<-stan_model('thomas_process/thomas_palm.stan')
   if(empirical){rho_sd<-1} else{rho_sd<-100}
+  
+  cat("\n Thomas Process Example:")
+  
   # ORGANIZE DATA
   data<-data_clean(S=S,R=R,wsize=wsize,dr=dr)
   
@@ -293,6 +299,10 @@ fit_palm_thomas<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=10
 fit_palm_dpp<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000,dr=0.1/500){
   model<-stan_model('dpp/dpp_palm.stan')
   if(empirical){rho_sd<-1} else{rho_sd<-100}
+  
+  cat("\n DPP Example:")
+  
+  
   # ORGANIZE DATA
   data<-data_clean(S=S,R=R,wsize=wsize,dr=dr)
   
@@ -325,22 +335,22 @@ fit_palm_dpp<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000,
   })
   cat(paste0(round(init_time[3],2)," seconds"))
   
-  post_mean<-get_posterior_mean(post,pars=c("mu","lmu","nu","lnu","sig2","lsig2"))
+  post_mean<-get_posterior_mean(post,pars=c("rho","lalpha","alpha"))
+  mG<-dppGauss(lambda=post_mean[1],alpha=exp(post_mean[2]),d=2)
   
   cat("\n Computing first posterior adjustment...")
   
   ### ADJUSTMENT 1
   cal1_time<-system.time({
-    H_inv<-cov(cbind(rstan::extract(post,"lmu")$lmu,
-                     rstan::extract(post,"lnu")$lnu,
-                     rstan::extract(post,"lsig2")$lsig2))
+    H_inv<-cov(cbind(rstan::extract(post,"rho")$rho,
+                     rstan::extract(post,"lalpha")$lalpha))
     
     score_out<-foreach(k=c(1:1000),.combine='rbind')%dopar%{
-      S_temp<-rThomas(kappa=exp(post_mean[2]),mu=exp(post_mean[4]),scale=sqrt(exp(post_mean[6])))
+      S_temp<-simulate.dppm(nsim=1,mG,W=owin(c(0,wsize),c(0,wsize)))
       if(S_temp$n==0){next}
       data_temp<-data_clean(S_temp,R,wsize)
       
-      return(thomas_score_eval(data_temp,lmu=post_mean[2],lnu=post_mean[4],lsig2=post_mean[6],d_lamP=thomas_d_lamP,lamP=thomas_lamP))
+      return(dpp_score_eval(data_temp,rho=post_mean[1],lalpha=post_mean[2],d_lamP=dpp_d_lamP,lamP=dpp_lamP))
     }
     
     J<-cov(score_out)
@@ -349,34 +359,30 @@ fit_palm_dpp<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000,
     
     stan_data$eta<-eta
     
-    suppressWarnings({
-      cal1_post<-sampling(
-        model,  # Stan program compiled earlier
-        data = stan_data,    # named list of data
-        chains = 1,             # number of Markov chains
-        warmup = burn,          # number of warmup iterations per chain
-        iter = iters,            # total number of iterations per chain
-        cores = 1,              # number of cores (could use one per chain)
-        refresh = 0,             # no progress shown
-        init=list(list(rho=rho,lsig2=0,nu=10))#,
-        #control = list(adapt_delta = 0.99)
-      )
-    })
+    cal1_post<-sampling(
+      model,
+      data = stan_data,
+      chains = 1,
+      warmup = burn,
+      iter = iters,
+      cores = 1,
+      refresh = 0,
+      init=list(list(rho=rho,lsig2=0,nu=10))
+    )
   })
   cat(paste0(round(cal1_time[3],2)," seconds"))
   
   cat("\n Computing second posterior adjustment...")
   ### ADJUSTEMENT 2
   cal2_time<-system.time({
-    S_boot<-bootstrap_ppp(nsim=nboot,model="Thomas",pars=list(kappa=exp(post_mean[2]),mu=exp(post_mean[4]),sig2=exp(post_mean[6])),
-                          win=S$window)
     
     boot_out<-foreach(k=c(1:nboot))%dopar%{
-      data<-data_clean(S_boot[[k]],R=R,wsize=wsize)
+      S_boot<-simulate.dppm(nsim=1,mG,W=owin(c(0,wsize),c(0,wsize)))
+      data<-data_clean(S_boot,R=R,wsize=wsize)
       
       # SETUP STAN DATA
       stan_data_boot<-list(
-        rho_mean=S_boot[[k]]$n/area(owin(c(0,wsize),c(0,wsize))),
+        rho_mean=S_boot$n/area(owin(c(0,wsize),c(0,wsize))),
         rho_sd=rho_sd,
         dN=length(data$dG),
         dG=data$dG,
@@ -400,37 +406,30 @@ fit_palm_dpp<-function(S,R,wsize,empirical=TRUE,nboot=100,iters=10000,burn=1000,
       )
       
       
-      summ<-summary(post_boot,pars=c("lmu","lnu","lsig2"),c(0.025,0.975))$summary
+      summ<-summary(post_boot,pars=c("rho","lalpha"),c(0.025,0.975))$summary
       return(summ[,c(1,4,5)])
     }
     
-    # CALIBRATE LMU
-    lmu_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
-    lmu_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-lmu_mean
-    lmu_eta<-find_eta(y_mean=lmu_mean,y_qs=lmu_qs,alpha=0.05,truth=post_mean[2])
-    lmu_post<-rstan::extract(post,pars="lmu")$lmu
-    calibrated_lmu<-mean(lmu_post)+lmu_eta*(lmu_post-mean(lmu_post))
+    # CALIBRATE RHO
+    rho_mean<-unlist(lapply(boot_out,function(x) x[1,1]))
+    rho_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[1,2:3])),nrow=2))-rho_mean
+    rho_eta<-find_eta(y_mean=rho_mean,y_qs=rho_qs,alpha=0.05,truth=post_mean[1])
+    rho_post<-rstan::extract(post,pars="rho")$rho
+    calibrated_rho<-mean(rho_post)+rho_eta*(rho_post-mean(rho_post))
     
-    # CALIBRATE LNU
-    lnu_mean<-unlist(lapply(boot_out,function(x) x[2,1]))
-    lnu_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[2,2:3])),nrow=2))-lnu_mean
-    lnu_eta<-find_eta(y_mean=lnu_mean,y_qs=lnu_qs,alpha=0.05,truth=post_mean[4])
-    lnu_post<-rstan::extract(post,pars="lnu")$lnu
-    calibrated_lnu<-mean(lnu_post)+lnu_eta*(lnu_post-mean(lnu_post))
-    
-    # CALIBRATE LSIG2
-    lsig2_mean<-unlist(lapply(boot_out,function(x) x[3,1]))
-    lsig2_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[3,2:3])),nrow=2))-lsig2_mean
-    lsig2_eta<-find_eta(y_mean=lsig2_mean,y_qs=lsig2_qs,alpha=0.05,truth=post_mean[6])
-    lsig2_post<-rstan::extract(post,pars="lsig2")$lsig2
-    calibrated_lsig2<-mean(lsig2_post)+lsig2_eta*(lsig2_post-mean(lsig2_post))
+    # CALIBRATE LALPHA
+    lalpha_mean<-unlist(lapply(boot_out,function(x) x[2,1]))
+    lalpha_qs<-t(matrix(unlist(lapply(boot_out,function(x) x[2,2:3])),nrow=2))-lalpha_mean
+    lalpha_eta<-find_eta(y_mean=lalpha_mean,y_qs=lalpha_qs,alpha=0.05,truth=post_mean[2])
+    lalpha_post<-rstan::extract(post,pars="lalpha")$lalpha
+    calibrated_lalpha<-mean(lalpha_post)+lalpha_eta*(lalpha_post-mean(lalpha_post))
     
   })
   
   cat(paste0(round(cal2_time[3],2)," seconds"))
   
-  return(list(palm_post=matrix(unlist(extract(post,pars=c("lmu","lnu","lsig2"))),nrow=9000),
-              cal1_post=matrix(unlist(extract(cal1_post,pars=c("lmu","lnu","lsig2"))),nrow=9000),
-              cal2_post=cbind(calibrated_lmu,calibrated_lnu,calibrated_lsig2)))
+  return(list(palm_post=matrix(unlist(extract(post,pars=c("rho","lalpha"))),nrow=9000),
+              cal1_post=matrix(unlist(extract(cal1_post,pars=c("rho","lalpha"))),nrow=9000),
+              cal2_post=cbind(calibrated_rho,calibrated_lalpha)))
 }
 
