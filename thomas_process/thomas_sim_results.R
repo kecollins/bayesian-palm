@@ -65,3 +65,18 @@ time_df<-data.frame(rbind(c(time_0.2,ESS_0.2),
                           c(time_0.2_NE,ESS_0.2_NE)))
 
 time_df %>% kable(format="latex")
+
+# ------------------------------------------------------------------------------#
+# PRINT OUT ALL TABLE DATA
+
+# Values for Thomas section of Table 1
+print("Table 1: Thomas")
+print(time_df)
+
+# Values for Table 4
+print("Table 4:")
+print(bias_df)
+
+# Values for Table 5
+print("Table 5:")
+print(cov_df)

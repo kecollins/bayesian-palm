@@ -87,7 +87,7 @@ time_df<-data.frame(rbind(c(full_time_sim1,NA,NA,full_ESS_sim1,NA,NA),
 
 time_df<-cbind(c("FL","PLE_0.2","PLE_0.4","FL","PLE_0.2","PLE_0.4","FL","PLE_0.2","PLE_0.4"),time_df)
 colnames(time_df)<-NULL
-time_df
+
 time_df %>% kable(format="latex")
 # ------------------------------------------------------------------------------#
 
@@ -187,11 +187,6 @@ rownames(cov_df)<-c("FL","PLE_0.2","PL_0.2","PLE_0.4","PL_0.4")
 colnames(cov_df)<-NULL
 kable(cov_df,format = "latex",align="c")
 
-
-inference_df<-data.frame(cbind(mu_df,lsig2_df,lphi_df))
-
-kable(inference_df,format = "latex",booktabs = TRUE,align="c")
-
 # ------------------------------------------------------------------------------#
 
 
@@ -242,5 +237,20 @@ cbind(round(df_mean,4),round(df_025,4),round(df_975,4)) %>% kable(format="latex"
 options(scipen = 0)
 # ------------------------------------------------------------------------------#
 
+
+# ------------------------------------------------------------------------------#
+# PRINT OUT ALL TABLE DATA
+
+# Values for LGCP section of Table 1
+print("Table 1: LGCP")
+print(time_df)
+
+# Values for Table 2
+print("Table 2:")
+print(point_est_df)
+
+# Values for Table 3
+print("Table 3:")
+print(cov_df)
 
 

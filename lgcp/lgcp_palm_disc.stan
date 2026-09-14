@@ -37,7 +37,7 @@ parameters {
 transformed parameters {
   real<lower=0> sig2;
   real<lower=0> phi;
-  real<lower=0> mu;
+  real mu;
   sig2 = exp(lsig2);
   phi = exp(lphi);
   mu = log(rho)-sig2/2;
