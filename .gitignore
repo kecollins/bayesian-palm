@@ -3,3 +3,10 @@
 .Rhistory
 .Rproj.user/
 scratch/
+renv
+dpp_example_traceplots.pdf
+lgcp_example_traceplots.pdf
+thomas_example_traceplots.pdf
+.gitignore
+Code.Rproj
+
